@@ -153,83 +153,123 @@ def draw_map(draw, box, dots, labelled=14):
 
 # ------------------------------------------------------------- artwork -------
 
+# Panel grounds. A newspaper front runs pictures as solids, not pale line art:
+# the paid band on this board sits at 21-31% ink coverage with 3.5-13.7% of the
+# page in near-black, so each kind gets a printed-photograph ground and draws
+# its marks against it. Every ground is darker than the 170 ink threshold, so
+# the panel carries weight at 300 px across.
+GROUNDS = {
+    "missile": (30, 34, 48),
+    "storm":   (40, 48, 60),
+    "flags":   (86, 78, 66),
+    "crowd":   (100, 92, 80),
+    "money":   (28, 42, 38),
+    "chart":   (78, 72, 64),
+    "court":   (88, 82, 70),
+    "skyline": (52, 40, 66),
+    "candles": (34, 40, 44),
+}
+
+
 def art_panel(draw, box, kind, accent=RED):
-    """A small flat-vector illustration, captioned by the caller."""
+    """A flat-vector picture on a printed ground, captioned by the caller."""
     x0, y0, x1, y1 = box
     w, h = x1 - x0, y1 - y0
-    draw.rectangle(box, fill=(232, 226, 214))
+    g = GROUNDS.get(kind, (40, 36, 32))
+    light = (238, 232, 220)
+    mid = (186, 178, 164)
+    warm = (214, 100, 78)
+    green = (96, 172, 128)
+    dark = (20, 18, 16)
+    draw.rectangle(box, fill=g)
 
     if kind == "chart":
-        base = y1 - 10
+        base = y1 - 9
+        bw = max(3, (w - 24) // 8)
         for i, frac in enumerate((0.34, 0.48, 0.44, 0.7, 0.92)):
-            bx = x0 + 10 + i * (w - 22) // 6
-            bh = int((h - 24) * frac)
-            draw.rectangle((bx, base - bh, bx + (w - 34) // 7, base), fill=accent)
-        draw.line((x0 + 7, base, x1 - 7, base), fill=INK, width=1)
+            bx = x0 + 9 + i * (w - 20) // 6
+            bh = int((h - 20) * frac)
+            draw.rectangle((bx, base - bh, bx + bw, base),
+                           fill=warm if i == 4 else light)
+        draw.line((x0 + 6, base, x1 - 6, base), fill=light, width=1)
 
     elif kind == "flags":
-        r = int(min(h - 20, w / 6.2))
+        # three flagstaffs on a lit platform, the leaders' row
+        r = max(6, int(min(h - 18, w / 7.0)))
         cy = y0 + h // 2
-        for i, c in enumerate([(196, 58, 52), (214, 176, 60), (60, 96, 168)]):
-            cx = x0 + w // 5 + i * (r + 5)
-            draw.ellipse((cx - r // 2, cy - r // 2, cx + r // 2, cy + r // 2), fill=c, outline=INK)
+        for i, c in enumerate([(198, 74, 66), (226, 188, 74), (92, 126, 196)]):
+            cx = x0 + w // 5 + i * (r + 4)
+            draw.line((cx, cy - r // 2 - 3, cx, y1 - 6), fill=dark, width=2)
+            draw.rectangle((cx, cy - r, cx + r, cy), fill=c, outline=dark)
+        draw.rectangle((x0, y1 - 5, x1, y1), fill=dark)
 
     elif kind == "skyline":
-        draw.rectangle((x0, y1 - int(h * 0.34), x1, y1), fill=(56, 42, 76))
-        for i, frac in enumerate((0.32, 0.5, 0.38, 0.6, 0.44, 0.54, 0.35)):
-            bw = w // 9
-            bx = x0 + 5 + i * bw
+        draw.rectangle((x0, y1 - int(h * 0.30), x1, y1), fill=dark)
+        for i, frac in enumerate((0.34, 0.52, 0.4, 0.62, 0.46, 0.56, 0.36)):
+            bw = max(4, w // 9)
+            bx = x0 + 4 + i * bw
             bh = int(h * frac)
-            draw.rectangle((bx, y1 - int(h * 0.24) - bh, bx + bw - 5, y1 - int(h * 0.24)),
-                           fill=(32, 24, 46))
-        draw.ellipse((x1 - 40, y0 + 8, x1 - 18, y0 + 30), fill=(226, 150, 74))
+            draw.rectangle((bx, y1 - int(h * 0.22) - bh, bx + bw - 4, y1 - int(h * 0.22)),
+                           fill=(14, 12, 22))
+            for wy in range(y1 - int(h * 0.22) - bh + 4, y1 - int(h * 0.24), 7):
+                draw.point((bx + 2, wy), fill=(228, 196, 120))
+        draw.ellipse((x1 - 34, y0 + 7, x1 - 18, y0 + 23), fill=(232, 206, 150))
 
     elif kind == "candles":
-        draw.line((x0 + 6, y0 + h // 2, x1 - 6, y0 + h // 2), fill=GREY)
-        xs = (0.12, 0.3, 0.48, 0.66, 0.84)
+        draw.line((x0 + 5, y0 + h // 2, x1 - 5, y0 + h // 2), fill=mid)
+        xs = (0.14, 0.31, 0.48, 0.65, 0.82)
         body = (0.32, 0.44, 0.38, 0.6, 0.82)
+        cw = max(3, w // 18)
         for i, frac in enumerate(body):
             cx = x0 + int(w * xs[i])
-            top = y1 - 12 - int((h - 22) * frac)
-            up = i % 2 == 0
-            draw.line((cx, top - 4, cx, top + 10 + (h // 5)), fill=INK)
-            draw.rectangle((cx - 4, top, cx + 4, top + 10 + h // 6),
-                           fill=(46, 132, 92) if up else accent)
+            top = y1 - 8 - int((h - 16) * frac)
+            draw.line((cx, top - 3, cx, top + 8 + h // 5), fill=mid, width=1)
+            draw.rectangle((cx - cw, top, cx + cw, top + 8 + h // 7),
+                           fill=green if i % 2 == 0 else warm)
 
     elif kind == "storm":
         for i in range(3):
-            yy = y0 + 12 + i * 10
-            draw.arc((x0 + 6, yy, x1 - 6, yy + 24), 196, 344, fill=(70, 96, 120), width=2)
+            yy = y0 + 9 + i * (h // 4)
+            draw.arc((x0 + 7, yy, x1 - 7, yy + (h // 2)), 196, 344,
+                     fill=(198, 204, 212), width=2)
+        draw.ellipse((x0 + w // 2 - 5, y0 + 4, x0 + w // 2 + 5, y0 + 14), fill=warm)
         for i in range(6):
-            xx = x0 + 16 + i * (w - 32) // 6
-            draw.line((xx, y1 - 26, xx - 4, y1 - 12), fill=(70, 96, 120), width=2)
+            xx = x0 + 14 + i * (w - 28) // 6
+            draw.line((xx, y1 - 18, xx - 4, y1 - 5), fill=(176, 190, 204), width=2)
 
     elif kind == "court":
         cx = x0 + w // 2
-        draw.rectangle((cx - 24, y0 + 8, cx + 24, y1 - 10), fill=(226, 220, 206), outline=INK)
-        for i in range(4):
-            yy = y0 + 20 + i * 10
-            draw.line((cx - 15, yy, cx + 15, yy), fill=GREY)
-        draw.line((cx, y0 + 3, cx, y0 + 8), fill=INK, width=2)
+        draw.polygon([(cx, y0 + 5), (cx - 22, y0 + 17), (cx + 22, y0 + 17)], fill=light)
+        draw.rectangle((cx - 22, y0 + 17, cx + 22, y1 - 7), fill=light)
+        for i in range(3):
+            yy = y0 + 22 + i * 8
+            draw.rectangle((cx - 15, yy, cx + 15, yy + 4), fill=g)
+        draw.rectangle((cx - 5, y1 - 16, cx + 5, y1 - 7), fill=dark)
 
     elif kind == "missile":
-        draw.line((x0 + 8, y1 - 14, x1 - 34, y0 + 16), fill=(150, 140, 128), width=2)
-        draw.arc((x0 + 12, y0 + 6, x1 - 18, y1 - 24), 200, 320, fill=accent, width=2)
-        draw.ellipse((x1 - 30, y0 + 8, x1 - 22, y0 + 16), fill=accent)
+        # a rising trail and the intercept
+        draw.line((x0 + 7, y1 - 6, x1 - 30, y0 + 14), fill=mid, width=2)
+        draw.line((x0 + 7, y1 - 6, x0 + 22 + w // 3, y0 + h // 3), fill=(96, 92, 86), width=1)
+        draw.arc((x0 + 10, y0 + 5, x1 - 14, y1 - 18), 200, 320, fill=warm, width=2)
+        draw.ellipse((x1 - 28, y0 + 7, x1 - 20, y0 + 15), fill=warm)
+        for i in range(3):
+            draw.point((x0 + 12 + i * 9, y1 - 12 - i * 5), fill=light)
 
     elif kind == "money":
+        bw = max(4, w // 8)
         for i in range(3):
-            bx = x0 + 10 + i * (w // 4)
-            draw.rectangle((bx, y1 - 20 - i * 7, bx + w // 7, y1 - 12), fill=(46, 132, 92))
-        draw.line((x0 + 6, y1 - 10, x1 - 6, y1 - 10), fill=INK)
+            bx = x0 + 9 + i * (w // 4)
+            draw.rectangle((bx, y1 - 16 - i * 5, bx + bw, y1 - 9), fill=green)
+        draw.line((x0 + 5, y1 - 8, x1 - 5, y1 - 8), fill=light, width=1)
 
     elif kind == "crowd":
         for i in range(9):
-            cx = x0 + 10 + i * (w - 20) // 9
-            r = 4 if i % 2 else 5
-            yy = y1 - 12 - (8 if i % 3 else 0)
-            draw.ellipse((cx - r, yy - 2 * r, cx + r, yy), fill=(64, 58, 52))
-            draw.line((cx, yy, cx, y1 - 4), fill=(64, 58, 52), width=2)
+            cx = x0 + 9 + i * (w - 18) // 9
+            r = 3 if i % 2 else 4
+            yy = y1 - 8 - (7 if i % 3 else 0)
+            draw.ellipse((cx - r, yy - 2 * r, cx + r, yy), fill=dark)
+            draw.line((cx, yy, cx, y1 - 3), fill=dark, width=2)
+        draw.rectangle((x0, y1 - 8, x1, y1), fill=(64, 58, 50))
 
     return box
 
@@ -240,7 +280,6 @@ def art_caption(draw, box, text, width):
     d_y = box[3] + 2
     draw.text((box[0], d_y), text, font=f, fill=GREY)
     return d_y + 8
-
 
 # ---------------------------------------------------------------- page -------
 
